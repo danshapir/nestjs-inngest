@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/e2e",
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "paths": {
+      "nestjs-inngest": ["../../src/index"],
+      "nestjs-inngest/*": ["../../src/*"]
+    }
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts"]
+}

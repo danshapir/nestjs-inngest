@@ -1,0 +1,21 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^nestjs-inngest$": "<rootDir>/../src/index",
+    "^nestjs-inngest/(.*)$": "<rootDir>/../src/$1"
+  },
+  "collectCoverageFrom": [
+    "../src/**/*.(t|j)s",
+    "!../src/**/*.spec.ts",
+    "!../src/**/*.interface.ts",
+    "!../src/index.ts"
+  ],
+  "coverageDirectory": "../coverage-e2e",
+  "testTimeout": 30000
+}

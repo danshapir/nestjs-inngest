@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm ls:*)",
+      "Bash(npm run start:dev:*)",
+      "Bash(npm install:*)",
+      "Read(/Users/danshapir/Documents/projects/**)",
+      "Bash(npm run build:*)",
+      "Bash(node:*)",
+      "Bash(npm run start:e2e:*)",
+      "Bash(npx jest:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(curl:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
