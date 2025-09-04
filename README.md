@@ -91,6 +91,9 @@ import { UserService } from './user.service';
       id: 'my-nestjs-app',
       // For development - connects to local Inngest dev server
       baseUrl: 'http://localhost:8288',
+      // Configure custom port and host (for auto-registration)
+      servePort: 3002,
+      serveHost: 'localhost',
       // For production - remove baseUrl to use Inngest Cloud
       signingKey: process.env.INNGEST_SIGNING_KEY,
       environment: process.env.NODE_ENV as 'development' | 'production',
@@ -762,6 +765,31 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 export class AppModule {}
 ```
 
+#### Custom Port & Host Configuration
+
+When your NestJS application runs on a custom port or needs a specific host configuration for auto-registration with the Inngest dev server:
+
+```typescript
+InngestModule.forRoot({
+  id: 'my-app',
+  baseUrl: 'http://localhost:8288', // Inngest dev server
+  
+  // Custom port configuration
+  servePort: 3002, // Your app runs on port 3002
+  serveHost: 'localhost', // Host for auto-registration
+  
+  // Or use environment variables
+  servePort: parseInt(process.env.PORT || '3000'),
+  serveHost: process.env.HOST || 'localhost',
+})
+```
+
+**When to use these options:**
+- Your app runs on a non-standard port (not 3000)
+- You need custom host configuration for Docker/containers
+- Multiple NestJS apps with Inngest on different ports
+- Load balancers or reverse proxies require specific host settings
+
 ## Real-World Examples
 
 ### 1. User Onboarding Workflow
@@ -1420,6 +1448,8 @@ export class NotificationService {
 | `signingKey` | `string` | `undefined` | Webhook signing key for production |
 | `isGlobal` | `boolean` | `false` | Make module available globally |
 | `path` | `string` | `'inngest'` | API endpoint path |
+| `servePort` | `number` | `process.env.PORT \|\| 3000` | Port where your app runs (for auto-registration) |
+| `serveHost` | `string` | `'localhost'` | Host where your app runs (for auto-registration) |
 | `environment` | `string` | `'development'` | Environment name |
 | `middleware` | `InngestMiddleware[]` | `[]` | Global middleware |
 | `logger` | `any` | `undefined` | Custom logger |

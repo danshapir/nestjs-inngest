@@ -109,6 +109,18 @@ export interface InngestModuleOptions {
   path?: string;
 
   /**
+   * The port where this application is running (for auto-registration)
+   * Defaults to process.env.PORT or 3000
+   */
+  servePort?: number;
+
+  /**
+   * The host URL where this application is accessible (for auto-registration)
+   * Defaults to 'localhost' in development
+   */
+  serveHost?: string;
+
+  /**
    * Signing key for webhook signature validation
    */
   signingKey?: string;

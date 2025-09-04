@@ -12,6 +12,8 @@ export const InngestConfigSchema = z.object({
   middleware: z.array(z.any()).optional(),
   clientOptions: z.object({}).passthrough().optional(),
   path: z.string().default('/api/inngest'),
+  servePort: z.number().min(1).max(65535).optional(),
+  serveHost: z.string().optional(),
   signingKey: z.string().optional(),
   logger: z.any().optional(),
 

@@ -33,6 +33,8 @@ export function createInngestController(path: string = 'inngest') {
         client,
         functions,
         signingKey: options.signingKey,
+        serveHost: options.serveHost,
+        servePath: options.path ? `/${options.path.replace(/^\//, '')}` : undefined,
       });
 
       this.logger.log(

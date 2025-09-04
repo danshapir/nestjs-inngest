@@ -78,8 +78,9 @@ export class InngestService implements OnModuleInit {
     }
 
     try {
-      const port = process.env.PORT || 3001;
-      const appUrl = `http://localhost:${port}/api/inngest`;
+      const port = this.options.servePort || process.env.PORT || 3000;
+      const host = this.options.serveHost || 'localhost';
+      const appUrl = `http://${host}:${port}/api/inngest`;
       const devServerUrl = this.options.baseUrl;
 
       this.logger.log('Attempting auto-registration with Inngest dev server', {
