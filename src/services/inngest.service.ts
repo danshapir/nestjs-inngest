@@ -80,7 +80,17 @@ export class InngestService implements OnModuleInit {
     try {
       const port = this.options.servePort || process.env.PORT || 3000;
       const host = this.options.serveHost || 'localhost';
-      const appUrl = `http://${host}:${port}/api/inngest`;
+      
+      // Handle serveHost as either full URL or hostname
+      let appUrl: string;
+      if (host.startsWith('http://') || host.startsWith('https://')) {
+        // serveHost is a full URL, use it directly
+        appUrl = `${host}/api/inngest`;
+      } else {
+        // serveHost is just hostname, construct URL with port
+        appUrl = `http://${host}:${port}/api/inngest`;
+      }
+      
       const devServerUrl = this.options.baseUrl;
 
       this.logger.log('Attempting auto-registration with Inngest dev server', {

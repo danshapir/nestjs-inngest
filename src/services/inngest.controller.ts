@@ -29,13 +29,26 @@ export function createInngestController(path: string = 'inngest') {
       this.logger.debug(`Client ID: ${client.id}`);
 
       // Create the serve handler with configuration
-      this.handler = serve({
+      const serveOptions: any = {
         client,
         functions,
         signingKey: options.signingKey,
-        serveHost: options.serveHost,
-        servePath: options.path ? `/${options.path.replace(/^\//, '')}` : undefined,
-      });
+      };
+
+      // Only pass serveHost if it's a full URL (for RegisterOptions)
+      if (
+        options.serveHost &&
+        (options.serveHost.startsWith('http://') || options.serveHost.startsWith('https://'))
+      ) {
+        serveOptions.serveHost = options.serveHost;
+      }
+
+      // Only pass servePath if path is configured
+      if (options.path) {
+        serveOptions.servePath = `/${options.path.replace(/^\//, '')}`;
+      }
+
+      this.handler = serve(serveOptions);
 
       this.logger.log(
         `Inngest handler initialized with ${functions.length} functions at path: /${cleanPath}`,

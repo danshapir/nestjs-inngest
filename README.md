@@ -774,11 +774,15 @@ InngestModule.forRoot({
   id: 'my-app',
   baseUrl: 'http://localhost:8288', // Inngest dev server
   
-  // Custom port configuration
-  servePort: 3002, // Your app runs on port 3002
-  serveHost: 'localhost', // Host for auto-registration
+  // Option 1: Hostname + Port (for local development)
+  servePort: 3002,
+  serveHost: 'localhost',
   
-  // Or use environment variables
+  // Option 2: Full URL (for production/custom setups)
+  serveHost: 'https://myapp.herokuapp.com',
+  // servePort is ignored when serveHost is a full URL
+  
+  // Option 3: Environment variables
   servePort: parseInt(process.env.PORT || '3000'),
   serveHost: process.env.HOST || 'localhost',
 })
@@ -1449,7 +1453,7 @@ export class NotificationService {
 | `isGlobal` | `boolean` | `false` | Make module available globally |
 | `path` | `string` | `'inngest'` | API endpoint path |
 | `servePort` | `number` | `process.env.PORT \|\| 3000` | Port where your app runs (for auto-registration) |
-| `serveHost` | `string` | `'localhost'` | Host where your app runs (for auto-registration) |
+| `serveHost` | `string` | `'localhost'` | Host/URL where your app runs. Can be hostname (`'localhost'`) or full URL (`'https://myapp.com'`) |
 | `environment` | `string` | `'development'` | Environment name |
 | `middleware` | `InngestMiddleware[]` | `[]` | Global middleware |
 | `logger` | `any` | `undefined` | Custom logger |
