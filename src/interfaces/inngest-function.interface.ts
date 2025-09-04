@@ -1,17 +1,17 @@
-import { 
-  EventPayload, 
-  InngestFunction, 
+import {
+  EventPayload,
+  InngestFunction,
   Context,
   Handler,
   GetEvents,
   GetFunctionInput,
   GetStepTools,
-  InngestMiddleware
+  InngestMiddleware,
 } from 'inngest';
 
 export interface InngestFunctionConfig<
   TEvents extends Record<string, EventPayload> = GetEvents<any>,
-  TTrigger extends any = any
+  TTrigger extends any = any,
 > {
   /**
    * Optional function ID override (defaults to class method name)
@@ -31,11 +31,13 @@ export interface InngestFunctionConfig<
   /**
    * Concurrency configuration
    */
-  concurrency?: number | Array<{
-    limit: number;
-    key?: string;
-    scope?: 'fn' | 'env' | 'account';
-  }>;
+  concurrency?:
+    | number
+    | Array<{
+        limit: number;
+        key?: string;
+        scope?: 'fn' | 'env' | 'account';
+      }>;
 
   /**
    * Rate limiting configuration
@@ -119,7 +121,7 @@ export interface InngestStepConfig {
 
 export interface InngestHandlerContext<
   TEvents extends Record<string, EventPayload> = GetEvents<any>,
-  TTrigger extends any = any
+  TTrigger extends any = any,
 > {
   event: any; // Simplified for compatibility
   step: GetStepTools<any>;
@@ -129,7 +131,7 @@ export interface InngestHandlerContext<
 export interface InngestFunctionHandler<
   TEvents extends Record<string, EventPayload> = GetEvents<any>,
   TTrigger extends any = any,
-  TOutput = any
+  TOutput = any,
 > {
   (context: InngestHandlerContext<TEvents, TTrigger>): Promise<TOutput> | TOutput;
 }

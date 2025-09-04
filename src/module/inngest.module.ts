@@ -1,29 +1,37 @@
-import { Module, DynamicModule, Global, Provider, Type } from '@nestjs/common';
+import { Module, DynamicModule, Global, Provider } from '@nestjs/common';
 import { ConfigurableModuleBuilder } from '@nestjs/common';
 import { DiscoveryModule } from '@nestjs/core';
-import { 
-  InngestModuleOptions, 
-  InngestModuleAsyncOptions, 
-  InngestOptionsFactory 
+import {
+  InngestModuleOptions,
+  InngestModuleAsyncOptions,
+  InngestOptionsFactory,
 } from '../interfaces';
 import { InngestService } from '../services/inngest.service';
 import { InngestExplorer } from '../services/inngest.explorer';
-import { InngestController } from '../services/inngest.controller';
+import { createInngestController, InngestController } from '../services/inngest.controller';
 import { INNGEST_MODULE_OPTIONS } from '../constants';
+import { validateConfig, mergeWithDefaults } from '../config/validation';
+import { InngestHealthModule } from '../health/health.module';
+import { InngestMonitoringModule } from '../monitoring/monitoring.module';
+import { InngestTracingModule } from '../tracing/tracing.module';
+import { InngestHealthService } from '../health/health.service';
+import { InngestMonitoringService } from '../monitoring/metrics.service';
 
-const { ConfigurableModuleClass, MODULE_OPTIONS_TOKEN } = 
-  new ConfigurableModuleBuilder<InngestModuleOptions>()
-    .setExtras(
-      {
-        isGlobal: false,
-      },
-      (definition, extras) => ({
-        ...definition,
-        global: extras.isGlobal,
-      }),
-    )
-    .setClassMethodName('forRoot')
-    .build();
+// Note: We're not using the ConfigurableModuleBuilder pattern anymore
+// since we need custom validation logic
+// const { ConfigurableModuleClass, MODULE_OPTIONS_TOKEN } =
+//   new ConfigurableModuleBuilder<InngestModuleOptions>()
+//     .setExtras(
+//       {
+//         isGlobal: false,
+//       },
+//       (definition, extras) => ({
+//         ...definition,
+//         global: extras.isGlobal,
+//       }),
+//     )
+//     .setClassMethodName('forRoot')
+//     .build();
 
 @Global()
 @Module({
@@ -34,20 +42,56 @@ const { ConfigurableModuleClass, MODULE_OPTIONS_TOKEN } =
 })
 export class InngestModule {
   static forRoot(options: InngestModuleOptions): DynamicModule {
+    // Merge with environment defaults and validate
+    const mergedOptions = mergeWithDefaults(options);
+    const validatedOptions = validateConfig(mergedOptions);
+
+    // Create dynamic controller with configured path
+    const DynamicInngestController = createInngestController(validatedOptions.path);
+
+    const imports = [DiscoveryModule];
+
+    // Conditionally add health module
+    if (validatedOptions.health?.enabled !== false) {
+      imports.push(InngestHealthModule);
+    }
+
+    // Conditionally add monitoring module
+    if (validatedOptions.monitoring?.enabled !== false) {
+      imports.push(InngestMonitoringModule);
+    }
+
+    // Always add tracing module (it gracefully handles missing OpenTelemetry deps)
+    imports.push(InngestTracingModule);
+
+    // Build exports array dynamically based on what's enabled
+    const exports: any[] = [InngestService, INNGEST_MODULE_OPTIONS];
+
+    if (validatedOptions.health?.enabled !== false) {
+      exports.push(InngestHealthModule);
+    }
+
+    if (validatedOptions.monitoring?.enabled !== false) {
+      exports.push(InngestMonitoringModule);
+    }
+
+    // Always export tracing module
+    exports.push(InngestTracingModule);
+
     return {
       module: InngestModule,
-      global: options.isGlobal ?? false,
-      imports: [DiscoveryModule],
+      global: validatedOptions.isGlobal ?? false,
+      imports,
       providers: [
         {
           provide: INNGEST_MODULE_OPTIONS,
-          useValue: options,
+          useValue: validatedOptions,
         },
         InngestService,
         InngestExplorer,
       ],
-      controllers: [InngestController],
-      exports: [InngestService, INNGEST_MODULE_OPTIONS],
+      controllers: [DynamicInngestController],
+      exports,
     };
   }
 
@@ -57,7 +101,11 @@ export class InngestModule {
     if (options.useFactory) {
       providers.push({
         provide: INNGEST_MODULE_OPTIONS,
-        useFactory: options.useFactory,
+        useFactory: async (...args: any[]) => {
+          const config = await options.useFactory!(...args);
+          const mergedConfig = mergeWithDefaults(config);
+          return validateConfig(mergedConfig);
+        },
         inject: options.inject || [],
       });
     } else if (options.useClass) {
@@ -68,31 +116,48 @@ export class InngestModule {
         },
         {
           provide: INNGEST_MODULE_OPTIONS,
-          useFactory: async (optionsFactory: InngestOptionsFactory) =>
-            await optionsFactory.createInngestOptions(),
+          useFactory: async (optionsFactory: InngestOptionsFactory) => {
+            const config = await optionsFactory.createInngestOptions();
+            const mergedConfig = mergeWithDefaults(config);
+            return validateConfig(mergedConfig);
+          },
           inject: [options.useClass],
         },
       );
     } else if (options.useExisting) {
       providers.push({
         provide: INNGEST_MODULE_OPTIONS,
-        useFactory: async (optionsFactory: InngestOptionsFactory) =>
-          await optionsFactory.createInngestOptions(),
+        useFactory: async (optionsFactory: InngestOptionsFactory) => {
+          const config = await optionsFactory.createInngestOptions();
+          const mergedConfig = mergeWithDefaults(config);
+          return validateConfig(mergedConfig);
+        },
         inject: [options.useExisting],
       });
     }
 
+    // Always include health, monitoring, and tracing modules for async configurations (health/monitoring can be disabled via config)
+    const imports = [
+      DiscoveryModule,
+      InngestHealthModule,
+      InngestMonitoringModule,
+      InngestTracingModule,
+      ...(options.imports || []),
+    ];
+
     return {
       module: InngestModule,
       global: options.isGlobal ?? false,
-      imports: [DiscoveryModule, ...(options.imports || [])],
-      providers: [
-        ...providers,
-        InngestService,
-        InngestExplorer,
-      ],
+      imports,
+      providers: [...providers, InngestService, InngestExplorer],
       controllers: [InngestController],
-      exports: [InngestService, INNGEST_MODULE_OPTIONS],
+      exports: [
+        InngestService,
+        INNGEST_MODULE_OPTIONS,
+        InngestHealthModule,
+        InngestMonitoringModule,
+        InngestTracingModule,
+      ],
     };
   }
 

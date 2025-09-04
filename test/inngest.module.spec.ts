@@ -19,7 +19,16 @@ describe('InngestModule', () => {
 
       const service = module.get<InngestService>(InngestService);
       expect(service).toBeDefined();
-      expect(service.getOptions()).toEqual(options);
+      
+      // Should include merged defaults for test environment
+      const mergedOptions = service.getOptions();
+      expect(mergedOptions.id).toBe(options.id);
+      expect(mergedOptions.eventKey).toBe(options.eventKey);
+      expect(mergedOptions.isGlobal).toBe(options.isGlobal);
+      // Should have defaults merged in
+      expect(mergedOptions.environment).toBe('test');
+      expect(mergedOptions.path).toBe('/api/inngest');
+      expect(mergedOptions.baseUrl).toBe('http://localhost:8288');
 
       await module.close();
     });
@@ -103,7 +112,13 @@ describe('InngestModule', () => {
         imports: [
           InngestModule.forRootAsync({
             useExisting: ConfigService,
-            imports: [],
+            imports: [
+              {
+                module: class TestConfigModule {},
+                providers: [ConfigService],
+                exports: [ConfigService],
+              }
+            ],
           }),
         ],
       }).compile();

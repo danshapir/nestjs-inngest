@@ -1,5 +1,9 @@
+// Import tracing setup first before any other imports
+import '../tracing';
+
 import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -18,13 +22,46 @@ async function bootstrap() {
   // Global prefix for API routes
   app.setGlobalPrefix('api');
 
+  // Setup Swagger documentation
+  const config = new DocumentBuilder()
+    .setTitle('NestJS-Inngest E2E Test App')
+    .setDescription('API documentation for testing NestJS-Inngest integration')
+    .setVersion('1.0')
+    .addTag('inngest', 'Inngest function testing endpoints')
+    .addTag('health', 'Health check and monitoring endpoints')  
+    .addTag('users', 'User management endpoints')
+    .addTag('test', 'Test endpoints for function triggers')
+    .build();
+  
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, document, {
+    customSiteTitle: 'NestJS-Inngest API Docs',
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
+
   const port = process.env.PORT || 3001;
   
   await app.listen(port);
   
-  logger.log(`🚀 Integration Test App is running on: http://localhost:${port}`);
-  logger.log(`📊 Inngest Dev Server should be running on: http://localhost:8288`);  
-  logger.log(`🔧 Inngest functions available at: http://localhost:${port}/api/inngest`);
+  logger.log('Integration Test App is running', {
+    url: `http://localhost:${port}`,
+    port,
+    environment: 'e2e-test'
+  });
+  logger.log('Inngest Dev Server connection info', {
+    url: 'http://localhost:8288',
+    status: 'expected-running'
+  });  
+  logger.log('Inngest functions endpoint available', {
+    endpoint: `/api/inngest`,
+    fullUrl: `http://localhost:${port}/api/inngest`
+  });
+  logger.log('API Documentation endpoint available', {
+    endpoint: '/docs',
+    fullUrl: `http://localhost:${port}/docs`
+  });
   
   // Log available endpoints
   logger.log('\n📋 Available endpoints:');

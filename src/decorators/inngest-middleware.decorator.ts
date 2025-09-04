@@ -11,22 +11,22 @@ function createMetadataDecorator(decoratorName: string, updateFn: (metadata: any
       // Modern decorator (stage 3)
       const context = propertyKey as any;
       const propertyName = context.name;
-      
+
       const metadata = Reflect.getMetadata(INNGEST_FUNCTION_METADATA, target, propertyName) || {};
       updateFn(metadata);
       Reflect.defineMetadata(INNGEST_FUNCTION_METADATA, metadata, target, propertyName);
-      
+
       return target;
     } else {
       // Legacy decorator
       if (!propertyKey) {
         throw new Error('PropertyKey is required for legacy decorator');
       }
-      
+
       const metadata = Reflect.getMetadata(INNGEST_FUNCTION_METADATA, target, propertyKey) || {};
       updateFn(metadata);
       Reflect.defineMetadata(INNGEST_FUNCTION_METADATA, metadata, target, propertyKey);
-      
+
       return descriptor;
     }
   };
@@ -35,15 +35,10 @@ function createMetadataDecorator(decoratorName: string, updateFn: (metadata: any
 /**
  * Decorator to add middleware to an Inngest function
  */
-export function UseMiddleware(
-  ...middleware: any[]
-) {
+export function UseMiddleware(...middleware: any[]) {
   return (target: any, propertyKey: string | symbol, descriptor?: PropertyDescriptor) => {
-    const existingMiddleware = Reflect.getMetadata(
-      INNGEST_MIDDLEWARE_METADATA,
-      target,
-      propertyKey,
-    ) || [];
+    const existingMiddleware =
+      Reflect.getMetadata(INNGEST_MIDDLEWARE_METADATA, target, propertyKey) || [];
 
     Reflect.defineMetadata(
       INNGEST_MIDDLEWARE_METADATA,
@@ -74,11 +69,7 @@ export function Concurrency(
 /**
  * Decorator to set rate limiting for an Inngest function
  */
-export function RateLimit(
-  limit: number,
-  period: string,
-  key?: string,
-): any {
+export function RateLimit(limit: number, period: string, key?: string): any {
   return createMetadataDecorator('RateLimit', (metadata) => {
     metadata.rateLimit = { limit, period, key };
   });
@@ -103,10 +94,7 @@ export function Throttle(
 /**
  * Decorator to set debounce configuration for an Inngest function
  */
-export function Debounce(
-  period: string,
-  key?: string,
-): any {
+export function Debounce(period: string, key?: string): any {
   return createMetadataDecorator('Debounce', (metadata) => {
     metadata.debounce = { period, key };
   });

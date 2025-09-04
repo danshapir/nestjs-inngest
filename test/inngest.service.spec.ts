@@ -54,7 +54,8 @@ describe('InngestService', () => {
       );
 
       expect(fn).toBeDefined();
-      expect(fn.id).toBe('test-function');
+      expect(typeof fn.id).toBe('function'); // In Inngest v3, id is a function
+      expect(fn.id('test-app')).toBe('test-app-test-function');
       expect(service.getFunctions()).toContain(fn);
     });
   });
@@ -72,7 +73,8 @@ describe('InngestService', () => {
       );
 
       expect(fn).toBeDefined();
-      expect(fn.id).toBe('scheduled-function');
+      expect(typeof fn.id).toBe('function'); // In Inngest v3, id is a function
+      expect(fn.id('test-app')).toBe('test-app-scheduled-function');
       expect(service.getFunctions()).toContain(fn);
     });
   });

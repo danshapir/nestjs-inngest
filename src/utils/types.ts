@@ -19,12 +19,7 @@ export type StepReturn<T = void> = T | Promise<T>;
  * Type guard to check if a value is an event payload
  */
 export function isEventPayload(value: any): value is EventPayload {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'name' in value &&
-    'data' in value
-  );
+  return typeof value === 'object' && value !== null && 'name' in value && 'data' in value;
 }
 
 /**
@@ -103,8 +98,6 @@ export function createUserEvent<TName extends string, TData = any>(
 /**
  * Helper to create typed batch events
  */
-export function createBatchEvents<TEvents extends EventPayload[]>(
-  ...events: TEvents
-): TEvents {
+export function createBatchEvents<TEvents extends EventPayload[]>(...events: TEvents): TEvents {
   return events;
 }

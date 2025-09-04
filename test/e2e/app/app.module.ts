@@ -6,6 +6,8 @@ import { UserModule } from './user/user.module';
 import { NotificationModule } from './notification/notification.module';
 import { HealthModule } from './health/health.module';
 import { MiddlewareModule } from './middleware/middleware.module';
+import { MonitoringModule } from './monitoring/monitoring.module';
+import { TestModule } from './test/test.module';
 
 // Test controller
 import { TestController } from './test.controller';
@@ -29,15 +31,27 @@ import { TestController } from './test.controller';
       // Make module global so all services can use InngestService
       isGlobal: true,
       
-      // Enable landing page for development
-      landingPage: true,
-      
-      // Custom logger for debugging
-      logger: console,
+      // Use NestJS logger instead of console
+      logger: undefined,
       
       // Additional client options
       clientOptions: {
         // Add any additional Inngest client options here
+      },
+      
+      // Enable tracing for e2e testing
+      tracing: {
+        enabled: true,
+        includeEventData: false,
+        includeStepData: false,
+        defaultAttributes: {
+          'test.environment': 'e2e',
+          'test.app': 'nestjs-inngest'
+        },
+        contextInjection: {
+          enabled: true,
+          fieldName: 'traceContext'
+        }
       },
     }),
     
@@ -46,6 +60,8 @@ import { TestController } from './test.controller';
     NotificationModule,
     HealthModule,
     MiddlewareModule,
+    MonitoringModule,
+    TestModule,
   ],
   controllers: [TestController],
 })
@@ -53,8 +69,17 @@ export class AppModule {
   private readonly logger = new Logger(AppModule.name);
 
   constructor() {
-    this.logger.log('🎯 NestJS Integration Test App initialized');
-    this.logger.log('📡 Inngest module configured for local dev server (localhost:8288)');
-    this.logger.log('🔄 All Inngest functions will be automatically discovered and registered');
+    this.logger.log('NestJS Integration Test App initialized', {
+      appType: 'e2e-test',
+      port: 3001
+    });
+    this.logger.log('Inngest module configured for local dev server', {
+      devServerUrl: 'localhost:8288',
+      clientId: 'nestjs-integration-test'
+    });
+    this.logger.log('Inngest function discovery enabled', {
+      autoDiscovery: true,
+      tracingEnabled: true
+    });
   }
 }

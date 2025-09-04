@@ -1,24 +1,19 @@
 import { SetMetadata } from '@nestjs/common';
-import { 
-  INNGEST_FUNCTION_METADATA, 
-  INNGEST_HANDLER_METADATA 
-} from '../constants';
+import { INNGEST_FUNCTION_METADATA, INNGEST_HANDLER_METADATA } from '../constants';
 import { InngestFunctionConfig, InngestFunctionMetadata } from '../interfaces';
 
 /**
  * Decorator to mark a method as an Inngest function
  * @param config - Configuration for the Inngest function
  */
-export function InngestFunction(
-  config: InngestFunctionConfig,
-): any {
+export function InngestFunction(config: InngestFunctionConfig): any {
   return (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor | any) => {
     // Handle both legacy and modern decorator signatures
     if (typeof propertyKey === 'object' && propertyKey && 'kind' in propertyKey) {
       // Modern decorator (stage 3)
       const context = propertyKey as any;
       const propertyName = context.name;
-      
+
       const metadata: InngestFunctionMetadata = {
         target,
         propertyKey: propertyName,
@@ -26,23 +21,19 @@ export function InngestFunction(
       };
 
       Reflect.defineMetadata(INNGEST_FUNCTION_METADATA, metadata, target, propertyName);
-      Reflect.defineMetadata(
-        INNGEST_HANDLER_METADATA, 
-        { useContext: true }, 
-        target, 
-        propertyName,
-      );
-      
+      Reflect.defineMetadata(INNGEST_HANDLER_METADATA, { useContext: true }, target, propertyName);
+
       return target;
     } else {
       // Legacy decorator
       if (!propertyKey) {
         throw new Error('PropertyKey is required for legacy decorator');
       }
-      
+
       // Check if there's existing metadata from middleware decorators
-      const existingMetadata = Reflect.getMetadata(INNGEST_FUNCTION_METADATA, target, propertyKey) || {};
-      
+      const existingMetadata =
+        Reflect.getMetadata(INNGEST_FUNCTION_METADATA, target, propertyKey) || {};
+
       const metadata: InngestFunctionMetadata = {
         target,
         propertyKey,
@@ -52,14 +43,9 @@ export function InngestFunction(
       };
 
       Reflect.defineMetadata(INNGEST_FUNCTION_METADATA, metadata, target, propertyKey);
-      
+
       // Mark as using context object by default
-      Reflect.defineMetadata(
-        INNGEST_HANDLER_METADATA, 
-        { useContext: true }, 
-        target, 
-        propertyKey,
-      );
+      Reflect.defineMetadata(INNGEST_HANDLER_METADATA, { useContext: true }, target, propertyKey);
 
       return descriptor;
     }
@@ -96,7 +82,7 @@ export function InngestEvent(
   options?: Omit<InngestFunctionConfig, 'id' | 'trigger'>,
 ): any {
   const trigger = typeof event === 'string' ? { event } : event;
-  
+
   return InngestFunction({
     id,
     trigger,

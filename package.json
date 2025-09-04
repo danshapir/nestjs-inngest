@@ -25,7 +25,7 @@
     "test:e2e": "jest --config test/jest-e2e.json",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "npm run lint && npm run test && npm run build",
     "start:e2e": "ts-node -P test/e2e/tsconfig.app.json test/e2e/app/main.ts",
     "start:e2e:dev": "nodemon --exec ts-node -P test/e2e/tsconfig.app.json test/e2e/app/main.ts"
   },
@@ -36,25 +36,33 @@
     "serverless",
     "background-jobs",
     "typescript",
-    "decorators"
+    "decorators",
+    "queue",
+    "workflow",
+    "microservices",
+    "async",
+    "jobs"
   ],
-  "author": "",
+  "author": "NestJS Inngest Contributors",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/nestjs-inngest.git"
+    "url": "https://github.com/nestjs-community/nestjs-inngest.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/nestjs-inngest/issues"
+    "url": "https://github.com/nestjs-community/nestjs-inngest/issues"
   },
-  "homepage": "https://github.com/yourusername/nestjs-inngest#readme",
+  "homepage": "https://github.com/nestjs-community/nestjs-inngest#readme",
   "devDependencies": {
     "@nestjs/cli": "^11.0.10",
     "@nestjs/schematics": "^11.0.7",
+    "@nestjs/swagger": "^11.2.0",
     "@nestjs/testing": "^11.1.6",
+    "@opentelemetry/auto-instrumentations-node": "^0.56.1",
     "@types/express": "^5.0.3",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.3.0",
+    "@types/supertest": "^6.0.2",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.41.0",
     "@typescript-eslint/parser": "^8.41.0",
@@ -64,22 +72,36 @@
     "jest": "^30.1.2",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",
+    "supertest": "^7.0.0",
+    "swagger-ui-express": "^5.0.1",
     "ts-jest": "^29.4.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "tsup": "^8.5.0",
     "typescript": "^5.9.2"
   },
   "peerDependencies": {
     "@nestjs/common": "^11.1.6",
     "@nestjs/core": "^11.1.6",
-    "inngest": "^3.40.1",
-    "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.2"
-  },
-  "dependencies": {
     "@nestjs/platform-express": "^11.1.6",
     "express": "^5.1.0",
+    "inngest": "^3.40.2",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "zod": "^3.25.76"
+  },
+  "peerDependenciesMeta": {
+    "@opentelemetry/api": {
+      "optional": true
+    },
+    "@opentelemetry/sdk-node": {
+      "optional": true
+    }
+  },
+  "optionalDependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/sdk-node": "^0.56.0"
+  },
+  "dependencies": {
     "uuid": "^11.1.0"
   }
 }

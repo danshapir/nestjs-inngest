@@ -1,7 +1,12 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger, Optional } from '@nestjs/common';
 import { DiscoveryService, MetadataScanner } from '@nestjs/core';
 import { InngestService } from './inngest.service';
-import { INNGEST_FUNCTION_METADATA, INNGEST_HANDLER_METADATA, INNGEST_MIDDLEWARE_METADATA } from '../constants';
+import { InngestMonitoringService } from '../monitoring/metrics.service';
+import {
+  INNGEST_FUNCTION_METADATA,
+  INNGEST_HANDLER_METADATA,
+  INNGEST_MIDDLEWARE_METADATA,
+} from '../constants';
 import { InngestFunctionMetadata } from '../interfaces';
 
 @Injectable()
@@ -12,6 +17,7 @@ export class InngestExplorer implements OnModuleInit {
     private readonly discoveryService: DiscoveryService,
     private readonly metadataScanner: MetadataScanner,
     private readonly inngestService: InngestService,
+    @Optional() private readonly monitoringService?: InngestMonitoringService,
   ) {}
 
   async onModuleInit() {
@@ -22,7 +28,7 @@ export class InngestExplorer implements OnModuleInit {
   async explore() {
     try {
       this.logger.log('📡 Starting function discovery with DiscoveryService...');
-      
+
       const providers = this.discoveryService.getProviders();
       const controllers = this.discoveryService.getControllers();
       const instances = [...providers, ...controllers];
@@ -39,8 +45,10 @@ export class InngestExplorer implements OnModuleInit {
         const functionCount = await this.lookupFunctions(instance);
         functionsFound += functionCount;
       }
-      
-      this.logger.log(`✅ Function discovery complete. Found ${functionsFound} decorated functions`);
+
+      this.logger.log(
+        `✅ Function discovery complete. Found ${functionsFound} decorated functions`,
+      );
     } catch (error) {
       this.logger.error('Failed to explore functions:', error.message, error.stack);
     }
@@ -85,19 +93,21 @@ export class InngestExplorer implements OnModuleInit {
 
     try {
       // Extract @UseMiddleware decorator middleware
-      const middlewareFromDecorator = Reflect.getMetadata(
-        INNGEST_MIDDLEWARE_METADATA,
-        prototype,
-        methodName,
-      ) || [];
+      const middlewareFromDecorator =
+        Reflect.getMetadata(INNGEST_MIDDLEWARE_METADATA, prototype, methodName) || [];
 
       // The functionMetadata should already contain all the middleware decorator data
       // since they modify the same metadata object
 
       // Merge all configuration including middleware decorator metadata
       // Extract core metadata properties and spread the rest as middleware properties
-      const { target, propertyKey, config: metadataConfig, ...middlewareProperties } = functionMetadata;
-      
+      const {
+        target,
+        propertyKey,
+        config: metadataConfig,
+        ...middlewareProperties
+      } = functionMetadata;
+
       const fullConfig = {
         id: config.id || `${instance.constructor.name}.${methodName}`,
         name: config.name || methodName,
@@ -108,56 +118,99 @@ export class InngestExplorer implements OnModuleInit {
         ...(middlewareFromDecorator.length > 0 && { middleware: middlewareFromDecorator }),
       };
 
-      // Create the Inngest function with proper binding
+      // Create the Inngest function with proper binding and monitoring
       const inngestFunction = this.inngestService.createFunction(
         fullConfig,
         async (inngestContext: any) => {
-          // Debug: log the complete context we receive from Inngest
-          this.logger.log(`🔧 [EXPLORER] Full context keys: [${Object.keys(inngestContext || {}).join(', ')}]`);
-          
-          // Extract standard parameters - the entire inngestContext IS the context
-          const { event, step } = inngestContext;
-          
-          this.logger.log('🔧 [EXPLORER] Extracted parameters:');
-          this.logger.log(`  - eventKeys: [${Object.keys(event || {}).join(', ')}]`);
-          this.logger.log(`  - stepKeys: [${Object.keys(step || {}).join(', ')}]`);
-          this.logger.log(`  - fullContextKeys: [${Object.keys(inngestContext || {}).join(', ')}]`);
-          this.logger.log(`  - hasMiddlewareExecuted: ${JSON.stringify(inngestContext.middlewareExecuted)}`);
-          this.logger.log(`  - hasValidatedAt: ${JSON.stringify(inngestContext.validatedAt)}`);
-          
-          // Bind the handler to the instance to maintain 'this' context
-          const boundHandler = handler.bind(instance);
-          
-          // Check if the handler expects individual parameters or a context object
-          const handlerMetadata = Reflect.getMetadata(
-            INNGEST_HANDLER_METADATA,
-            prototype,
-            methodName,
-          );
+          const functionId = fullConfig.id || `${instance.constructor.name}.${methodName}`;
+          const startTime = Date.now();
+          let success = false;
+          let error: Error | undefined;
 
-          // Create enhanced context with ALL middleware properties dynamically
-          // Extract only middleware-added properties (exclude standard Inngest context keys)
-          const standardInngestKeys = ['event', 'step', 'events', 'runId', 'attempt', 'logger'];
-          const middlewareProperties = Object.fromEntries(
-            Object.entries(inngestContext)
-              .filter(([key]) => !standardInngestKeys.includes(key))
-          );
-          
-          // The inngestContext already contains all middleware enhancements
-          // We just need to extract the non-standard properties for the ctx parameter
-          const enhancedCtx = middlewareProperties;
+          try {
+            // Extract standard parameters from Inngest context
+            const { event, step } = inngestContext;
 
-          this.logger.log(`🔧 [EXPLORER] Enhanced context keys: [${Object.keys(enhancedCtx).join(', ')}]`);
+            // Bind the handler to the instance to maintain 'this' context
+            const boundHandler = handler.bind(instance);
 
-          if (handlerMetadata?.useContext) {
-            // Pass as context object with enhanced context
-            return await boundHandler({ event, step, ctx: enhancedCtx });
-          } else {
-            // Pass as individual parameters with enhanced context
-            return await boundHandler(event, step, enhancedCtx);
+            // Check if the handler expects individual parameters or a context object
+            const handlerMetadata = Reflect.getMetadata(
+              INNGEST_HANDLER_METADATA,
+              prototype,
+              methodName,
+            );
+
+            // Create enhanced context with ALL middleware properties dynamically
+            // Extract only middleware-added properties (exclude standard Inngest context keys)
+            const standardInngestKeys = ['event', 'step', 'events', 'runId', 'attempt', 'logger'];
+            const middlewareProperties = Object.fromEntries(
+              Object.entries(inngestContext).filter(([key]) => !standardInngestKeys.includes(key)),
+            );
+
+            // The inngestContext already contains all middleware enhancements
+            // We just need to extract the non-standard properties for the ctx parameter
+            const enhancedCtx = middlewareProperties;
+
+            let result;
+            if (handlerMetadata?.useContext) {
+              // Pass as context object with enhanced context
+              result = await boundHandler({ event, step, ctx: enhancedCtx });
+            } else {
+              // Pass as individual parameters with enhanced context
+              result = await boundHandler(event, step, enhancedCtx);
+            }
+
+            success = true;
+            return result;
+          } catch (err) {
+            error = err instanceof Error ? err : new Error(String(err));
+            success = false;
+            throw error;
+          } finally {
+            const executionTime = Date.now() - startTime;
+
+            // Record metrics if monitoring service is available
+            if (this.monitoringService) {
+              try {
+                this.monitoringService.recordFunctionExecution(
+                  functionId,
+                  executionTime,
+                  success,
+                  error,
+                );
+              } catch (metricsError) {
+                this.logger.error(
+                  `Failed to record metrics for ${functionId}: ${metricsError.message}`,
+                );
+              }
+            }
+
+            // Log execution details
+            const logLevel = success ? 'log' : 'error';
+            this.logger[logLevel](
+              `Function ${functionId} executed in ${executionTime}ms (success: ${success})${
+                error ? ` - Error: ${error.message}` : ''
+              }`,
+            );
           }
         },
       );
+
+      // Register function with monitoring service for tracking
+      if (this.monitoringService) {
+        try {
+          this.monitoringService.registerFunction(
+            fullConfig.id, // Use the configured ID instead of inngestFunction.id
+            fullConfig.name || methodName,
+            fullConfig,
+          );
+        } catch (monitoringError) {
+          this.logger.error(
+            `Failed to register function with monitoring service: ${monitoringError.message}`,
+          );
+        }
+      }
 
       this.logger.log(
         `✅ Registered Inngest function: ${inngestFunction.id} from ${instance.constructor.name}.${methodName}`,
@@ -165,10 +218,7 @@ export class InngestExplorer implements OnModuleInit {
       this.logger.log(`🔧 Function config: ${JSON.stringify(fullConfig, null, 2)}`);
       return true;
     } catch (error) {
-      this.logger.error(
-        `Failed to register function ${methodName}: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Failed to register function ${methodName}: ${error.message}`, error.stack);
       return false;
     }
   }

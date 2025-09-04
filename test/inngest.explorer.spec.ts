@@ -1,9 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DiscoveryService } from '@nestjs/core';
+import { DiscoveryService, MetadataScanner } from '@nestjs/core';
 import { InngestExplorer } from '../src/services/inngest.explorer';
 import { InngestService } from '../src/services/inngest.service';
 import { InngestFunction } from '../src/decorators';
 import { INNGEST_MODULE_OPTIONS } from '../src/constants';
+import { InngestMonitoringService } from '../src/monitoring';
 
 describe('InngestExplorer', () => {
   let explorer: InngestExplorer;
@@ -40,6 +41,14 @@ describe('InngestExplorer', () => {
         InngestExplorer,
         InngestService,
         TestService,
+        MetadataScanner,
+        {
+          provide: InngestMonitoringService,
+          useValue: {
+            registerFunction: jest.fn(),
+            recordFunctionExecution: jest.fn(),
+          },
+        },
         {
           provide: INNGEST_MODULE_OPTIONS,
           useValue: {
@@ -85,9 +94,9 @@ describe('InngestExplorer', () => {
     const functions = inngestService.getFunctions();
     expect(functions).toHaveLength(2);
 
-    const functionIds = functions.map(fn => fn.id);
-    expect(functionIds).toContain('test-function');
-    expect(functionIds).toContain('another-function');
+    const functionIds = functions.map(fn => fn.id('test-app'));
+    expect(functionIds).toContain('test-app-test-function');
+    expect(functionIds).toContain('test-app-another-function');
   });
 
   it('should not register methods without decorators', async () => {

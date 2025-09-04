@@ -25,6 +25,8 @@ export {
   Retries,
 } from './decorators/inngest-middleware.decorator';
 
+// Note: @Traced decorator removed - tracing is now automatic via middleware
+
 // Interface exports
 export {
   InngestModuleOptions,
@@ -35,7 +37,43 @@ export {
   InngestHandlerContext,
   InngestFunctionHandler,
   InngestFunctionMetadata,
+  InngestMonitoringConfig,
+  InngestHealthConfig,
+  InngestTracingConfig,
 } from './interfaces';
+
+// Configuration validation exports
+export {
+  validateConfig,
+  mergeWithDefaults,
+  createDefaultConfig,
+  InngestConfigSchema,
+  DevelopmentConfigSchema,
+  ProductionConfigSchema,
+} from './config/validation';
+
+// Health check exports
+export {
+  InngestHealthModule,
+  InngestHealthService,
+  HealthCheckResult,
+  SystemHealth,
+  InngestHealthStatus,
+} from './health';
+
+// Monitoring exports
+export {
+  InngestMonitoringModule,
+  InngestMonitoringService,
+  MetricValue,
+  Counter,
+  Gauge,
+  Histogram,
+  Metric,
+  MetricsCollector,
+  FunctionMetrics,
+  SystemMetrics,
+} from './monitoring';
 
 // Utility exports
 export {

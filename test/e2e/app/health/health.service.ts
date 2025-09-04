@@ -166,8 +166,8 @@ export class HealthService {
         }
         
         // Evaluate External APIs
-        const downApis = externalApiHealth.filter(api => api.status === 'down');
-        const degradedApis = externalApiHealth.filter(api => api.status === 'degraded');
+        const downApis = externalApiHealth.filter((api: any) => api.status === 'down');
+        const degradedApis = externalApiHealth.filter((api: any) => api.status === 'degraded');
         
         for (const api of downApis) {
           issues.push({ type: 'external_api', severity: 'high', message: `${api.name} is down` });
@@ -227,7 +227,7 @@ export class HealthService {
           }
           
           return { 
-            alertsGenerated: healthEvaluation.issues.filter(i => i.severity === 'critical' || i.severity === 'high').length,
+            alertsGenerated: healthEvaluation.issues.filter((i: any) => i.severity === 'critical' || i.severity === 'high').length,
           };
         });
       }
@@ -277,7 +277,7 @@ export class HealthService {
           database: databaseHealth,
           resources: resourceHealth,
           externalApis: externalApiHealth.length,
-          alertsGenerated: healthEvaluation.issues.filter(i => i.severity === 'critical' || i.severity === 'high').length,
+          alertsGenerated: healthEvaluation.issues.filter((i: any) => i.severity === 'critical' || i.severity === 'high').length,
         },
       };
 
@@ -567,6 +567,17 @@ export class HealthService {
       activeAlerts,
       recentMetrics,
     };
+  }
+
+  isSystemReady(): boolean {
+    const currentHealth = this.getCurrentHealth();
+    const activeAlerts = this.getActiveAlerts();
+    
+    // System is ready if status is healthy or degraded (not unhealthy)
+    // and there are no critical alerts
+    const hasCriticalAlerts = activeAlerts.some(alert => alert.severity === 'critical');
+    
+    return currentHealth.status !== 'unhealthy' && !hasCriticalAlerts;
   }
 
   getActiveAlerts(): SystemAlert[] {

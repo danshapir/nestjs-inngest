@@ -1,0 +1,48 @@
+# Source code and development files
+src/
+test/
+examples/
+docs/
+
+# Configuration files
+*.config.js
+*.config.ts
+jest.config.js
+nest-cli.json
+tsconfig.json
+tsconfig.build.json
+.eslintrc.js
+.prettierrc
+
+# Documentation (except README)
+*.md
+!README.md
+
+# Development scripts
+test_all_functions.sh
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+.tmp/
+
+# Package manager files
+.npmrc
+yarn.lock
+pnpm-lock.yaml
+
+# Git and CI files
+.git/
+.gitignore
+.github/
+.claude/
+
+# Environment files
+.env*
+!.env.example

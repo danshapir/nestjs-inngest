@@ -4,7 +4,7 @@
 //
 // The decorators @InngestTrigger, @Cron, @OnEvent, and @OnEvents were
 // redundant because:
-// 1. @InngestCron(id, cron, options) is cleaner than @Cron + @InngestFunction  
+// 1. @InngestCron(id, cron, options) is cleaner than @Cron + @InngestFunction
 // 2. @InngestEvent(id, event, options) is cleaner than @OnEvent + @InngestFunction
 // 3. Multiple events can be handled with separate functions or array syntax in trigger config
 //

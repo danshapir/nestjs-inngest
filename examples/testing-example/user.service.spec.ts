@@ -171,7 +171,7 @@ describe('UserService with Inngest', () => {
       const mockContext = createMockInngestContext({
         event: {
           name: 'user.created',
-          data: { email: 'test@example.com' },
+          data: { userId: 'test-123', email: 'test@example.com' },
         },
       });
 
@@ -189,7 +189,7 @@ describe('UserService with Inngest', () => {
 
       expect(emailResult).toEqual({
         emailSent: true,
-        to: mockContext.event.data.email,
+        to: 'test@example.com',
       });
     });
 
