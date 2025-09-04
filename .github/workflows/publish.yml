@@ -134,6 +134,8 @@ jobs:
       - name: Update package-lock.json
         if: (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true') || github.event_name == 'release'
         run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
           git add package.json package-lock.json
           git commit -m "chore: bump version to $PACKAGE_VERSION [skip ci]" || exit 0
           git push origin ${{ github.ref_name }}
