@@ -41,13 +41,25 @@
     "workflow",
     "microservices",
     "async",
-    "jobs"
+    "jobs",
+    "scheduler",
+    "cron",
+    "retry",
+    "resilient",
+    "durable-functions",
+    "step-functions",
+    "event-sourcing",
+    "messaging",
+    "webhooks",
+    "observability",
+    "tracing",
+    "monitoring"
   ],
-  "author": "NestJS Inngest Contributors",
+  "author": "Dan Shapir",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nestjs-community/nestjs-inngest.git"
+    "url": "git+https://github.com/nestjs-community/nestjs-inngest.git"
   },
   "bugs": {
     "url": "https://github.com/nestjs-community/nestjs-inngest/issues"
