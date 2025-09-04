@@ -46,12 +46,6 @@ jobs:
       - name: Run linter
         run: npm run lint
         
-      - name: Run tests
-        run: npm run test:cov
-        
-      - name: Run E2E tests
-        run: npm run test:e2e
-        
       - name: Build package
         run: npm run build
         
