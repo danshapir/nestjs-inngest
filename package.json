@@ -1,5 +1,5 @@
 {
-  "name": "nestjs-inngest",
+  "name": "nestjs-inngest-sdk",
   "version": "0.1.0",
   "description": "Modern NestJS integration for Inngest - type-safe, decorator-based event-driven functions",
   "main": "./dist/index.js",
