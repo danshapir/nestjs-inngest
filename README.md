@@ -68,12 +68,18 @@ npm install @nestjs/common @nestjs/core reflect-metadata rxjs zod
 ### Optional Dependencies (for advanced features)
 
 ```bash
-# For OpenTelemetry tracing
-npm install @opentelemetry/api @opentelemetry/sdk-node
+# For OpenTelemetry tracing (IMPORTANT: Use compatible versions)
+npm install @opentelemetry/api@^1.9.0 @opentelemetry/sdk-node@^0.56.0
 
 # For health checks and monitoring
 npm install @nestjs/terminus @nestjs/platform-express
 ```
+
+> **⚠️ OpenTelemetry Version Constraints**: Due to Inngest's OpenTelemetry dependencies, you must use compatible versions:
+> - `@opentelemetry/api@^1.9.0` (latest stable)
+> - `@opentelemetry/sdk-node@^0.56.0` (matches Inngest v3.40.x)
+>
+> Using newer versions (e.g., sdk-node v0.205.x) will cause runtime conflicts. These constraints will be lifted when Inngest updates their OpenTelemetry dependencies.
 
 ## Quick Start
 
