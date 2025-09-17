@@ -35,12 +35,16 @@ export function createInngestController(path: string = 'inngest') {
         signingKey: options.signingKey,
       };
 
-      // Only pass serveHost if it's a full URL (for RegisterOptions)
-      if (
-        options.serveHost &&
-        (options.serveHost.startsWith('http://') || options.serveHost.startsWith('https://'))
-      ) {
-        serveOptions.serveHost = options.serveHost;
+      // Build serveHost URL if needed (matching the logic in inngest.service.ts)
+      if (options.serveHost) {
+        if (options.serveHost.startsWith('http://') || options.serveHost.startsWith('https://')) {
+          // serveHost is a full URL, use it directly
+          serveOptions.serveHost = options.serveHost;
+        } else {
+          // serveHost is just hostname, construct URL with port
+          const port = options.servePort || process.env.PORT || 3000;
+          serveOptions.serveHost = `http://${options.serveHost}:${port}`;
+        }
       }
 
       // Only pass servePath if path is configured
