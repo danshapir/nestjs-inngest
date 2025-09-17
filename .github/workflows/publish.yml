@@ -142,7 +142,7 @@ jobs:
 
   notify:
     name: Notify Success
-    needs: [test, publish]
+    needs: [publish]
     runs-on: ubuntu-latest
     if: success() && github.event.inputs.dry_run != 'true'
     
