@@ -1,6 +1,6 @@
 {
   "name": "nestjs-inngest-sdk",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Modern NestJS integration for Inngest - type-safe, decorator-based event-driven functions",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
