@@ -1,7 +1,7 @@
 # NestJS Inngest
 
-[![npm version](https://badge.fury.io/js/nestjs-inngest.svg)](https://badge.fury.io/js/nestjs-inngest)
-[![npm downloads](https://img.shields.io/npm/dm/nestjs-inngest.svg)](https://npmjs.org/package/nestjs-inngest)
+[![npm version](https://badge.fury.io/js/@torixtv%2Fnestjs-inngest.svg)](https://badge.fury.io/js/@torixtv%2Fnestjs-inngest)
+[![npm downloads](https://img.shields.io/npm/dm/@torixtv/nestjs-inngest.svg)](https://npmjs.org/package/@torixtv/nestjs-inngest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://badges.frapsoft.com/typescript/code/typescript.svg?v=101)](https://github.com/ellerbrock/typescript-badges/)
 
@@ -50,13 +50,13 @@ This NestJS integration brings Inngest's powerful capabilities to your NestJS ap
 
 ```bash
 # npm
-npm install nestjs-inngest inngest
+npm install @torixtv/nestjs-inngest inngest
 
-# yarn  
-yarn add nestjs-inngest inngest
+# yarn
+yarn add @torixtv/nestjs-inngest inngest
 
 # pnpm
-pnpm add nestjs-inngest inngest
+pnpm add @torixtv/nestjs-inngest inngest
 ```
 
 ### Peer Dependencies
@@ -88,7 +88,7 @@ npm install @nestjs/terminus @nestjs/platform-express
 ```typescript
 // app.module.ts
 import { Module } from '@nestjs/common';
-import { InngestModule } from 'nestjs-inngest';
+import { InngestModule } from '@torixtv/nestjs-inngest';
 import { UserService } from './user.service';
 
 @Module({
@@ -115,7 +115,7 @@ export class AppModule {}
 ```typescript
 // user.service.ts
 import { Injectable } from '@nestjs/common';
-import { InngestEvent, InngestService } from 'nestjs-inngest';
+import { InngestEvent, InngestService } from '@torixtv/nestjs-inngest';
 
 @Injectable()
 export class UserService {
@@ -190,7 +190,7 @@ Your functions will be automatically registered and visible in the Inngest dev U
 
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { InngestFunction } from 'nestjs-inngest';
+import { InngestFunction } from '@torixtv/nestjs-inngest';
 
 @Injectable()
 export class OrderService {
@@ -507,7 +507,7 @@ Enable distributed tracing to track your functions across your entire system:
 #### Configuration
 
 ```typescript
-import { InngestModule } from 'nestjs-inngest';
+import { InngestModule } from '@torixtv/nestjs-inngest';
 
 @Module({
   imports: [
@@ -594,7 +594,7 @@ async customTracedFunction({ event, step }) {
 
 ```typescript
 import { Module } from '@nestjs/common';
-import { InngestModule, InngestHealthModule } from 'nestjs-inngest';
+import { InngestModule, InngestHealthModule } from '@torixtv/nestjs-inngest';
 
 @Module({
   imports: [
@@ -618,7 +618,7 @@ export class AppModule {}
 #### Monitoring with Metrics
 
 ```typescript
-import { InngestMonitoringModule } from 'nestjs-inngest';
+import { InngestMonitoringModule } from '@torixtv/nestjs-inngest';
 
 @Module({
   imports: [
@@ -691,7 +691,7 @@ GET /health/inngest?details=true
 
 ```typescript
 // config/inngest.config.ts
-import { InngestModuleOptions } from 'nestjs-inngest';
+import { InngestModuleOptions } from '@torixtv/nestjs-inngest';
 
 export const getInngestConfig = (): InngestModuleOptions => {
   const baseConfig: InngestModuleOptions = {
@@ -808,7 +808,7 @@ A comprehensive user onboarding flow with email verification and follow-ups:
 
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { InngestEvent, InngestService } from 'nestjs-inngest';
+import { InngestEvent, InngestService } from '@torixtv/nestjs-inngest';
 
 interface UserEvents {
   'user.registered': {
@@ -924,7 +924,7 @@ A robust order processing workflow with payment, inventory, and fulfillment:
 
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { InngestEvent, Concurrency, Retries } from 'nestjs-inngest';
+import { InngestEvent, Concurrency, Retries } from '@torixtv/nestjs-inngest';
 
 @Injectable()
 export class OrderProcessingService {
@@ -1118,7 +1118,7 @@ A comprehensive data cleanup job that runs daily:
 
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { InngestCron } from 'nestjs-inngest';
+import { InngestCron } from '@torixtv/nestjs-inngest';
 
 @Injectable()
 export class DataCleanupService {
@@ -1593,7 +1593,7 @@ createMockInngestContext(overrides?: Partial<Context>): MockContext
 
 ```typescript
 import { Test, TestingModule } from '@nestjs/testing';
-import { MockInngestService, createMockInngestContext } from 'nestjs-inngest';
+import { MockInngestService, createMockInngestContext } from '@torixtv/nestjs-inngest';
 
 describe('UserService', () => {
   let service: UserService;
@@ -1645,7 +1645,7 @@ describe('UserService', () => {
 ### Integration Testing
 
 ```typescript
-import { createInngestTestingModule } from 'nestjs-inngest';
+import { createInngestTestingModule } from '@torixtv/nestjs-inngest';
 
 describe('UserService Integration', () => {
   let module: TestingModule;

@@ -15,7 +15,8 @@
       "WebFetch(domain:www.inngest.com)",
       "WebSearch",
       "Bash(PORT=3003 npm run start:e2e:dev)",
-      "Bash(npm run test:e2e:*)"
+      "Bash(npm run test:e2e:*)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []

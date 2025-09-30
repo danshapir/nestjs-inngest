@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InngestFunction } from 'nestjs-inngest';
+import { InngestFunction } from '@torixtv/nestjs-inngest';
 import { OrderData } from './order.service';
 
 export interface OrderPaymentEvent {

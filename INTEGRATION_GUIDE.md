@@ -11,7 +11,7 @@ The NestJS-Inngest package is designed as a **service-first npm package**. This 
 ```typescript
 // app.module.ts
 import { Module } from '@nestjs/common';
-import { InngestModule } from 'nestjs-inngest';
+import { InngestModule } from '@torixtv/nestjs-inngest';
 
 @Module({
   imports: [
@@ -46,7 +46,7 @@ import {
 ```typescript
 // health.controller.ts
 import { Controller, Get } from '@nestjs/common';
-import { InngestHealthService } from 'nestjs-inngest';
+import { InngestHealthService } from '@torixtv/nestjs-inngest';
 
 @Controller('health')
 export class HealthController {
@@ -108,7 +108,7 @@ The `getHealthStatus()` method returns:
 // metrics.controller.ts
 import { Controller, Get, Res } from '@nestjs/common';
 import { Response } from 'express';
-import { InngestMonitoringService } from 'nestjs-inngest';
+import { InngestMonitoringService } from '@torixtv/nestjs-inngest';
 
 @Controller('metrics')
 export class MetricsController {

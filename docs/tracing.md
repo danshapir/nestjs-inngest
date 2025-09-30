@@ -26,7 +26,7 @@ Tracing is **automatically enabled** when OpenTelemetry packages are detected - 
 
 ```typescript
 import { Module } from '@nestjs/common';
-import { InngestModule } from 'nestjs-inngest';
+import { InngestModule } from '@torixtv/nestjs-inngest';
 
 @Module({
   imports: [
@@ -45,7 +45,7 @@ Every step in your functions is automatically traced - no decorators needed:
 
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { InngestFunction } from 'nestjs-inngest';
+import { InngestFunction } from '@torixtv/nestjs-inngest';
 
 @Injectable()
 export class PaymentService {
@@ -146,7 +146,7 @@ For advanced use cases, you can inject the tracing service directly:
 
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { InngestTracingService } from 'nestjs-inngest';
+import { InngestTracingService } from '@torixtv/nestjs-inngest';
 
 @Injectable()
 export class AdvancedService {

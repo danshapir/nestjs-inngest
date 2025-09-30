@@ -190,7 +190,7 @@ Let's see that same order processing flow, reimagined with our elegant decorator
 
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { InngestFunction, InngestTrigger, InngestEventPayload } from 'nestjs-inngest';
+import { InngestFunction, InngestTrigger, InngestEventPayload } from '@torixtv/nestjs-inngest';
 
 @Injectable()
 export class OrderService {
@@ -695,7 +695,7 @@ Most background job libraries have this learning curve where you need to underst
 
 ```typescript
 // Step 1: Install
-npm install nestjs-inngest inngest
+npm install @torixtv/nestjs-inngest inngest
 
 // Step 2: Add the module (familiar NestJS pattern)
 @Module({
@@ -802,7 +802,7 @@ It's like having a **debugger for your entire distributed system**.
 Getting started takes literally minutes:
 
 ```bash
-npm install nestjs-inngest inngest
+npm install @torixtv/nestjs-inngest inngest
 ```
 
 ```typescript
@@ -876,6 +876,6 @@ Your background jobs don't have to be background mysteries anymore. They can be 
 
 ---
 
-*Ready to transform your background processing? Check out the [nestjs-inngest package](https://npmjs.com/package/nestjs-inngest) and start building workflows that won't let you down at 3 AM.*
+*Ready to transform your background processing? Check out the [nestjs-inngest package](https://npmjs.com/package/@torixtv/nestjs-inngest) and start building workflows that won't let you down at 3 AM.*
 
 **What's your most painful background job horror story? Share it in the comments—let's build better systems together.**

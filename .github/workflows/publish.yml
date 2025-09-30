@@ -149,6 +149,6 @@ jobs:
     steps:
       - name: Notify success
         run: |
-          echo "✅ Successfully published nestjs-inngest@$PACKAGE_VERSION to NPM"
-          echo "📦 Package: https://www.npmjs.com/package/nestjs-inngest"
+          echo "✅ Successfully published @torixtv/nestjs-inngest@$PACKAGE_VERSION to NPM"
+          echo "📦 Package: https://www.npmjs.com/package/@torixtv/nestjs-inngest"
           echo "🏷️ Release: ${{ github.event.release.html_url || 'Manual dispatch' }}"

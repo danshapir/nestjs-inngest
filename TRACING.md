@@ -16,7 +16,7 @@ This package provides enhanced OpenTelemetry tracing for Inngest functions in Ne
 ### 1. Enable Tracing in Your Module
 
 ```typescript
-import { InngestModule } from 'nestjs-inngest';
+import { InngestModule } from '@torixtv/nestjs-inngest';
 
 @Module({
   imports: [
@@ -47,7 +47,7 @@ export class AppModule {}
 
 ```typescript
 import { Injectable } from '@nestjs/common';
-import { InngestFunction } from 'nestjs-inngest';
+import { InngestFunction } from '@torixtv/nestjs-inngest';
 
 @Injectable()
 export class UserService {
