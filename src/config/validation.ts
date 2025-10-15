@@ -191,14 +191,54 @@ export const createDefaultConfig = (
 };
 
 /**
+ * Read configuration values from environment variables
+ * These act as fallbacks between defaults and explicit config
+ */
+function readEnvironmentConfig(): Partial<InngestModuleOptions> {
+  const envConfig: Partial<InngestModuleOptions> = {};
+
+  // Read servePort from INNGEST_SERVE_PORT or PORT
+  if (process.env.INNGEST_SERVE_PORT) {
+    const port = parseInt(process.env.INNGEST_SERVE_PORT, 10);
+    if (!isNaN(port)) {
+      envConfig.servePort = port;
+    }
+  } else if (process.env.PORT) {
+    const port = parseInt(process.env.PORT, 10);
+    if (!isNaN(port)) {
+      envConfig.servePort = port;
+    }
+  }
+
+  // Read serveHost from INNGEST_SERVE_HOST
+  if (process.env.INNGEST_SERVE_HOST) {
+    envConfig.serveHost = process.env.INNGEST_SERVE_HOST;
+  }
+
+  // Read path from INNGEST_PATH
+  if (process.env.INNGEST_PATH) {
+    envConfig.path = process.env.INNGEST_PATH;
+  }
+
+  return envConfig;
+}
+
+/**
  * Merge user configuration with environment defaults
+ * Configuration precedence (highest to lowest):
+ * 1. Explicit userConfig
+ * 2. Environment variables (INNGEST_SERVE_PORT, INNGEST_SERVE_HOST, INNGEST_PATH, PORT)
+ * 3. Package defaults
  */
 export function mergeWithDefaults(userConfig: any, environment?: string): any {
   const env = environment || userConfig.environment || process.env.NODE_ENV || 'development';
   const defaults = createDefaultConfig(env as any);
+  const envConfig = readEnvironmentConfig();
 
+  // Apply precedence: defaults < envConfig < userConfig
   return {
     ...defaults,
+    ...envConfig,
     ...userConfig,
     environment: env,
   };

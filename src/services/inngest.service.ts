@@ -65,22 +65,53 @@ export class InngestService implements OnModuleInit {
       this.logger.log(`Registered ${this.functions.length} Inngest functions`);
     }
 
+    // Skip auto-registration if disabled
+    if (this.options.disableAutoRegistration) {
+      this.logger.log(
+        'Auto-registration disabled. Call registerWithDevServer() manually when ready.',
+      );
+      return;
+    }
+
     // Delay auto-registration to allow InngestExplorer to finish discovering functions
     setTimeout(() => {
       this.registerWithDevServer();
     }, 1000);
   }
 
-  private async registerWithDevServer() {
+  /**
+   * Register functions with Inngest dev server
+   * Can be called manually to control when registration happens
+   *
+   * @param overrides Optional overrides for serveHost and servePort
+   * @example
+   * ```typescript
+   * // In main.ts after app.listen()
+   * const port = process.env.PORT || 3000;
+   * await app.listen(port);
+   * await app.get(InngestService).registerWithDevServer({
+   *   servePort: port,
+   *   serveHost: 'localhost'
+   * });
+   * ```
+   */
+  async registerWithDevServer(overrides?: {
+    serveHost?: string;
+    servePort?: number;
+  }): Promise<void> {
     if (!this.options.baseUrl || this.options.baseUrl.includes('inngest.com')) {
       // Skip registration for production Inngest or if no baseUrl
       return;
     }
 
     try {
-      const port = this.options.servePort || process.env.PORT || 3000;
-      const host = this.options.serveHost || 'localhost';
-      
+      // Use overrides if provided, otherwise fall back to options
+      const port =
+        overrides?.servePort ??
+        this.options.servePort ??
+        (process.env.PORT ? parseInt(process.env.PORT) : 3000);
+      const host = overrides?.serveHost ?? this.options.serveHost ?? 'localhost';
+
       // Handle serveHost as either full URL or hostname
       let appUrl: string;
       if (host.startsWith('http://') || host.startsWith('https://')) {
@@ -90,15 +121,33 @@ export class InngestService implements OnModuleInit {
         // serveHost is just hostname, construct URL with port
         appUrl = `http://${host}:${port}/api/inngest`;
       }
-      
+
       const devServerUrl = this.options.baseUrl;
+
+      // Configuration validation warnings
+      if (process.env.PORT && parseInt(process.env.PORT) !== port) {
+        this.logger.warn(
+          `Port mismatch detected: servePort (${port}) differs from PORT env var (${process.env.PORT}). ` +
+            `Ensure they match, or Inngest won't be able to call your functions. ` +
+            `See: https://github.com/yourusername/nestjs-inngest#port-mismatch-issues`,
+        );
+      }
+
+      if (host === 'localhost' && (process.env.KUBERNETES_SERVICE_HOST || process.env.DOCKER)) {
+        this.logger.warn(
+          `Using 'localhost' for serveHost in containerized environment. ` +
+            `This may not work in Docker/Kubernetes. Consider using service DNS names or setting INNGEST_SERVE_HOST. ` +
+            `See: https://github.com/yourusername/nestjs-inngest#kubernetes-docker-connection-issues`,
+        );
+      }
 
       this.logger.log('Attempting auto-registration with Inngest dev server', {
         devServerUrl,
         appUrl,
         port,
-        source: 'auto-nestjs-inngest',
+        source: overrides ? 'manual-registration' : 'auto-nestjs-inngest',
         hasSigningKey: !!this.options.signingKey,
+        configSource: overrides ? 'overrides' : this.getConfigSource(port, host),
       });
 
       const response = await fetch(`${devServerUrl}/fn/register`, {
@@ -136,6 +185,33 @@ export class InngestService implements OnModuleInit {
         stack: error.stack,
       });
     }
+  }
+
+  /**
+   * Helper to determine where configuration values came from
+   */
+  private getConfigSource(port: number, host: string): string {
+    const sources: string[] = [];
+
+    if (this.options.servePort) {
+      sources.push('explicit-config');
+    } else if (process.env.INNGEST_SERVE_PORT) {
+      sources.push('INNGEST_SERVE_PORT');
+    } else if (process.env.PORT) {
+      sources.push('PORT');
+    } else {
+      sources.push('default');
+    }
+
+    if (this.options.serveHost) {
+      sources.push('explicit-host');
+    } else if (process.env.INNGEST_SERVE_HOST) {
+      sources.push('INNGEST_SERVE_HOST');
+    } else {
+      sources.push('default-host');
+    }
+
+    return sources.join(',');
   }
 
   /**

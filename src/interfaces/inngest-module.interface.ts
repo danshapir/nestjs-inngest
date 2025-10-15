@@ -121,6 +121,14 @@ export interface InngestModuleOptions {
   serveHost?: string;
 
   /**
+   * Disable automatic registration with Inngest dev server on module initialization
+   * When true, you must call inngestService.registerWithDevServer() manually
+   * Useful for dynamic port allocation or complex startup sequences
+   * @default false
+   */
+  disableAutoRegistration?: boolean;
+
+  /**
    * Signing key for webhook signature validation
    */
   signingKey?: string;

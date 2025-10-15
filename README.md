@@ -771,6 +771,67 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 export class AppModule {}
 ```
 
+#### Understanding Configuration Parameters
+
+Before diving into specific configuration patterns, it's important to understand what the key configuration parameters actually mean and how they work together.
+
+##### The Three Configuration Concerns
+
+When configuring the Inngest module, you're dealing with three separate concerns:
+
+1. **Inngest Server Location** (`baseUrl`): Where the Inngest server is running
+2. **Your App Location** (`serveHost`, `servePort`): Where YOUR NestJS app is accessible
+3. **Endpoint Path** (`path`): Where the Inngest functions endpoint is served in your app
+
+##### Visual Architecture
+
+```
+┌──────────────────────────────┐         ┌──────────────────────────────┐
+│  Inngest Dev Server          │         │  Your NestJS App             │
+│  localhost:8288              │◄────────│  localhost:3000              │
+│  (baseUrl)                   │  calls  │  (serveHost:servePort)       │
+│                              │         │                              │
+│  - Function registry         │         │  /api/inngest                │
+│  - Event queue               │         │  (path + globalPrefix)       │
+│  - UI Dashboard              │         │                              │
+└──────────────────────────────┘         └──────────────────────────────┘
+```
+
+**How auto-registration works:**
+
+1. When your NestJS app starts, it creates an endpoint at `path` (default: `/inngest`)
+2. If `baseUrl` points to a dev server (not `inngest.com`), the module automatically POSTs to `{baseUrl}/fn/register`
+3. The registration tells Inngest: "My functions are available at `http://{serveHost}:{servePort}/{path}`"
+4. Inngest dev server then calls YOUR app at that URL when events trigger your functions
+
+##### Common Confusion Points
+
+**"What is serveHost/servePort for?"**
+- These are NOT Inngest's host/port (that's `baseUrl`)
+- These tell Inngest where YOUR app is running
+- Think of them as "my app's address" not "Inngest's address"
+
+**"Does path respect NestJS global prefix?"**
+- No, the `@Controller` decorator doesn't know about global prefix at decoration time
+- If you use `app.setGlobalPrefix('api')`, you must set `path: 'api/inngest'` manually
+- This is consistent with how other NestJS packages work (like `@nestjs/swagger`)
+
+**"Do I need to configure servePort if my app runs on the default port?"**
+- If your app runs on port 3000: No configuration needed (it's the default)
+- If your app runs on a different port: Yes, you must set `servePort` to match
+- The module defaults to `process.env.PORT || 3000`, so setting `PORT` env var works too
+
+##### Configuration Precedence
+
+The module follows this precedence order when determining configuration values:
+
+```
+1. Explicit configuration in forRoot() / forRootAsync()
+2. Environment variables (INNGEST_SERVE_PORT, INNGEST_SERVE_HOST, INNGEST_PATH)
+3. Standard environment variables (PORT for servePort)
+4. Package defaults (servePort: 3000, serveHost: 'localhost', path: 'inngest')
+```
+
 #### Custom Port & Host Configuration
 
 When your NestJS application runs on a custom port or needs a specific host configuration for auto-registration with the Inngest dev server:
@@ -779,26 +840,230 @@ When your NestJS application runs on a custom port or needs a specific host conf
 InngestModule.forRoot({
   id: 'my-app',
   baseUrl: 'http://localhost:8288', // Inngest dev server
-  
+
   // Option 1: Hostname + Port (for local development)
   servePort: 3002,
   serveHost: 'localhost',
-  
+
   // Option 2: Full URL (for production/custom setups)
   serveHost: 'https://myapp.herokuapp.com',
   // servePort is ignored when serveHost is a full URL
-  
-  // Option 3: Environment variables
+
+  // Option 3: Environment variables (recommended)
   servePort: parseInt(process.env.PORT || '3000'),
-  serveHost: process.env.HOST || 'localhost',
+  serveHost: process.env.INNGEST_SERVE_HOST || 'localhost',
+
+  // Option 4: Let environment variables handle it (with new auto-detection)
+  // servePort auto-reads from INNGEST_SERVE_PORT or PORT
+  // serveHost auto-reads from INNGEST_SERVE_HOST
+  // path auto-reads from INNGEST_PATH
 })
 ```
+
+#### Common Configuration Patterns
+
+Here are the most common configuration patterns you'll need:
+
+##### Pattern 1: Default Development Setup
+
+The simplest configuration - all defaults work for standard local development:
+
+```typescript
+// Your app runs on port 3000 with no global prefix
+InngestModule.forRoot({
+  id: 'my-app',
+  baseUrl: 'http://localhost:8288',
+  // That's it! Defaults handle the rest:
+  // - servePort: 3000
+  // - serveHost: 'localhost'
+  // - path: 'inngest'
+})
+
+// Your functions will be accessible at: http://localhost:3000/inngest
+// Inngest dev server will auto-register and call this URL
+```
+
+##### Pattern 2: Custom Port
+
+When your app runs on a non-standard port:
+
+```typescript
+// Your app runs on port 3002
+InngestModule.forRoot({
+  id: 'my-app',
+  baseUrl: 'http://localhost:8288',
+  servePort: 3002, // Must match where your app actually listens
+})
+
+// Or better - use environment variable:
+// In main.ts:
+const port = process.env.PORT || 3002;
+await app.listen(port);
+
+// In module config:
+InngestModule.forRoot({
+  id: 'my-app',
+  baseUrl: 'http://localhost:8288',
+  servePort: parseInt(process.env.PORT || '3002'),
+})
+```
+
+##### Pattern 3: With NestJS Global Prefix
+
+When using `app.setGlobalPrefix()`, you must include it in the path:
+
+```typescript
+// In main.ts:
+const app = await NestFactory.create(AppModule);
+app.setGlobalPrefix('api'); // Global prefix for all routes
+await app.listen(3000);
+
+// In module config:
+InngestModule.forRoot({
+  id: 'my-app',
+  baseUrl: 'http://localhost:8288',
+  path: 'api/inngest', // MUST include the global prefix manually
+})
+
+// Your functions will be at: http://localhost:3000/api/inngest
+// NOT at: http://localhost:3000/inngest
+```
+
+**Why?** The `@Controller` decorator is applied before `setGlobalPrefix()` runs, so the module can't auto-detect it. This is standard NestJS behavior.
+
+##### Pattern 4: Production Deployment (Cloud Platforms)
+
+For platforms like Heroku, Render, AWS, etc.:
+
+```typescript
+InngestModule.forRootAsync({
+  imports: [ConfigModule],
+  useFactory: (config: ConfigService) => ({
+    id: config.get('INNGEST_APP_ID'),
+    signingKey: config.get('INNGEST_SIGNING_KEY'), // Required for production
+    eventKey: config.get('INNGEST_EVENT_KEY'),
+    environment: 'production',
+    // No baseUrl - uses Inngest Cloud
+    // For cloud platforms, you typically don't need serveHost/servePort
+    // because Inngest Cloud reaches you via your public URL
+  }),
+  inject: [ConfigService],
+})
+```
+
+##### Pattern 5: Kubernetes Deployment
+
+For Kubernetes with internal service DNS:
+
+```typescript
+InngestModule.forRootAsync({
+  imports: [ConfigModule],
+  useFactory: (config: ConfigService) => ({
+    id: config.get('INNGEST_APP_ID'),
+    signingKey: config.get('INNGEST_SIGNING_KEY'),
+    baseUrl: config.get('INNGEST_BASE_URL'), // If using self-hosted Inngest
+
+    // Option A: Explicit K8s service DNS
+    serveHost: config.get('K8S_SERVICE_HOST', 'my-app.default.svc.cluster.local'),
+    servePort: config.get('SERVICE_PORT', 8080),
+
+    // Option B: Use environment variables (recommended)
+    // Set in your K8s deployment:
+    // - INNGEST_SERVE_HOST=my-app.default.svc.cluster.local
+    // - PORT=8080
+    // Module will auto-read these
+  }),
+  inject: [ConfigService],
+})
+```
+
+**Kubernetes deployment YAML:**
+```yaml
+env:
+  - name: INNGEST_SERVE_HOST
+    value: "my-app-service.default.svc.cluster.local"
+  - name: PORT
+    value: "8080"
+  - name: INNGEST_APP_ID
+    valueFrom:
+      configMapKeyRef:
+        name: inngest-config
+        key: app-id
+```
+
+##### Pattern 6: Docker Compose
+
+For local development with Docker Compose:
+
+```typescript
+InngestModule.forRoot({
+  id: 'my-app',
+  // Use Docker service name from docker-compose.yml
+  baseUrl: 'http://inngest:8288',
+  serveHost: 'app', // Docker service name for your NestJS app
+  servePort: 3000,
+})
+```
+
+**docker-compose.yml:**
+```yaml
+services:
+  app:
+    build: .
+    ports:
+      - '3000:3000'
+    environment:
+      - INNGEST_SERVE_HOST=app
+      - PORT=3000
+
+  inngest:
+    image: inngest/inngest:latest
+    ports:
+      - '8288:8288'
+```
+
+##### Pattern 7: Manual Registration Control
+
+For advanced scenarios where you need control over when registration happens:
+
+```typescript
+// Disable auto-registration
+InngestModule.forRoot({
+  id: 'my-app',
+  baseUrl: 'http://localhost:8288',
+  disableAutoRegistration: true, // Don't register on module init
+})
+
+// In main.ts - register manually after app.listen()
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+
+  // Now register with the actual port
+  const inngestService = app.get(InngestService);
+  await inngestService.registerWithDevServer({
+    serveHost: 'localhost',
+    servePort: port,
+  });
+
+  console.log(`App listening on port ${port}`);
+}
+```
+
+**When to use this:**
+- Dynamic port allocation (port 0)
+- Complex startup sequences
+- Testing scenarios
+- When you need to defer registration
 
 **When to use these options:**
 - Your app runs on a non-standard port (not 3000)
 - You need custom host configuration for Docker/containers
 - Multiple NestJS apps with Inngest on different ports
 - Load balancers or reverse proxies require specific host settings
+- Kubernetes deployments with service DNS
 
 ## Real-World Examples
 
@@ -2056,6 +2321,145 @@ export class MonitoringService {
 ```bash
 # Check if registration endpoint is accessible
 curl -X PUT http://localhost:3000/inngest
+
+# Should return Inngest function metadata as JSON
+```
+
+**Configuration-specific checks:**
+
+```typescript
+// Verify your configuration makes sense:
+InngestModule.forRoot({
+  id: 'my-app',
+  baseUrl: 'http://localhost:8288', // ✓ Must be where Inngest dev server runs
+  serveHost: 'localhost',             // ✓ Must be where YOUR app runs
+  servePort: 3000,                    // ✓ Must match app.listen() port
+  path: 'inngest',                    // ✓ Endpoint path in your app
+})
+```
+
+**Check auto-registration in logs:**
+
+Look for these log messages when your app starts:
+```
+[Inngest] Initializing Inngest module...
+[Inngest] Registering functions with dev server...
+[Inngest] Successfully registered X functions
+```
+
+If you see errors like `ECONNREFUSED`, the `baseUrl` is wrong or Inngest dev server isn't running.
+
+#### Port Mismatch Issues
+
+**Problem:** Functions registered but Inngest can't call them (connection refused errors in Inngest UI).
+
+**Root Cause:** `servePort` doesn't match the actual port your app is listening on.
+
+**Diagnosis:**
+```bash
+# Check what port your app is actually on:
+netstat -an | grep LISTEN | grep 3000
+
+# Try calling your endpoint directly:
+curl http://localhost:3000/inngest
+# If this fails, your servePort config is wrong
+```
+
+**Solutions:**
+
+```typescript
+// ❌ WRONG - Port mismatch:
+// main.ts
+await app.listen(3002); // App listens on 3002
+
+// module
+InngestModule.forRoot({
+  servePort: 3000, // ❌ Config says 3000 - MISMATCH!
+})
+
+// ✓ CORRECT - Ports match:
+// main.ts
+const port = process.env.PORT || 3002;
+await app.listen(port);
+
+// module
+InngestModule.forRoot({
+  servePort: parseInt(process.env.PORT || '3002'), // ✓ Same port
+})
+```
+
+**Best Practice:** Use `process.env.PORT` in both places to guarantee they match.
+
+#### Global Prefix Issues
+
+**Problem:** Getting 404 errors when Inngest tries to call your functions.
+
+**Root Cause:** You're using `app.setGlobalPrefix()` but didn't include it in the `path` configuration.
+
+**Diagnosis:**
+```bash
+# If you set global prefix to 'api':
+curl http://localhost:3000/inngest        # ❌ 404
+curl http://localhost:3000/api/inngest    # ✓ Should work
+```
+
+**Solutions:**
+
+```typescript
+// ❌ WRONG - Missing global prefix:
+// main.ts
+app.setGlobalPrefix('api');
+
+// module
+InngestModule.forRoot({
+  path: 'inngest', // ❌ Will be at /inngest, but prefix makes it /api/inngest
+})
+
+// ✓ CORRECT - Include global prefix:
+InngestModule.forRoot({
+  path: 'api/inngest', // ✓ Explicitly include the prefix
+})
+```
+
+**Why this happens:** The `@Controller` decorator is applied before `setGlobalPrefix()` runs, so the module can't auto-detect it. This is standard NestJS behavior, consistent with packages like `@nestjs/swagger`.
+
+#### Kubernetes/Docker Connection Issues
+
+**Problem:** Functions work locally but not in Kubernetes/Docker.
+
+**Root Cause:** `serveHost` is set to `localhost` but Inngest can't reach `localhost` from another container/pod.
+
+**Solutions:**
+
+**For Docker Compose:**
+```typescript
+// Use Docker service names, not 'localhost'
+InngestModule.forRoot({
+  baseUrl: 'http://inngest:8288',     // Inngest service name
+  serveHost: 'app',                    // Your app's service name
+  servePort: 3000,
+})
+```
+
+**For Kubernetes:**
+```typescript
+// Use full K8s service DNS
+InngestModule.forRoot({
+  serveHost: 'my-app-service.default.svc.cluster.local',
+  servePort: 8080,
+})
+
+// Or use environment variables (recommended):
+// Set in deployment YAML:
+// - INNGEST_SERVE_HOST=my-app-service.default.svc.cluster.local
+```
+
+**Debug checklist:**
+```bash
+# From within the Inngest container/pod, can you reach your app?
+kubectl exec -it inngest-pod -- curl http://my-app-service:8080/inngest
+
+# If this fails, your serveHost/servePort is wrong or network policies are blocking
 ```
 
 #### Events not triggering functions

@@ -598,18 +598,6 @@ export class InngestMonitoringService implements OnModuleInit, OnModuleDestroy {
   private collectSystemMetrics(): void {
     try {
       this.updateSystemMetrics();
-
-      // Record system metrics as custom metrics
-      this.setGauge('system_memory_rss', this.systemMetrics.memory.rss, { type: 'rss' });
-      this.setGauge('system_memory_heap', this.systemMetrics.memory.heapUsed, {
-        type: 'heap_used',
-      });
-      this.setGauge('system_process_uptime', this.systemMetrics.process.uptime);
-
-      if (this.systemMetrics.eventLoop.delay > 0) {
-        this.setGauge('system_event_loop_delay', this.systemMetrics.eventLoop.delay);
-      }
-
       this.logger.debug('System metrics collected');
     } catch (error) {
       this.logger.error(`Failed to collect system metrics: ${error.message}`);
