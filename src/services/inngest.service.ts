@@ -98,12 +98,16 @@ export class InngestService implements OnModuleInit {
         appUrl,
         port,
         source: 'auto-nestjs-inngest',
+        hasSigningKey: !!this.options.signingKey,
       });
 
       const response = await fetch(`${devServerUrl}/fn/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(this.options.signingKey && {
+            Authorization: `Bearer ${this.options.signingKey}`,
+          }),
         },
         body: JSON.stringify({
           url: appUrl,
